@@ -1,19 +1,20 @@
 package routes
 
 import (
-	"github.com/boltdbgui/server/handlers"
 	"github.com/labstack/echo/v4"
+
+	"github.com/knqyf263/boltwiz/server/handlers"
 )
 
-func RegisterV1Routes(e *echo.Echo) {
+func RegisterV1Routes(e *echo.Echo, h *handlers.Handlers) {
 	v1 := e.Group("/api/v1")
-	v1.GET("", handlers.SayHello, can("api"))
-	v1.POST("/list", handlers.ListElement)
-	v1.POST("/add_buckets", handlers.AddBucket)
-	v1.POST("/add_pairs", handlers.AddPairs)
-	v1.POST("/delete", handlers.DeleteElement)
-	v1.POST("/rename_key", handlers.RenameElement)
-	v1.POST("/update_value", handlers.UpdatePairValue)
+	v1.GET("", h.SayHello, can("api"))
+	v1.POST("/list", h.ListElement)
+	v1.POST("/add_buckets", h.AddBucket)
+	v1.POST("/add_pairs", h.AddPairs)
+	v1.POST("/delete", h.DeleteElement)
+	v1.POST("/rename_key", h.RenameElement)
+	v1.POST("/update_value", h.UpdatePairValue)
 }
 
 // can checks that the current user's role is allowed to perform all of the

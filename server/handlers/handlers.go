@@ -8,20 +8,28 @@ import (
 
 	"github.com/labstack/gommon/log"
 
-	"github.com/boltdbgui/modules/database/usecase"
+	"github.com/knqyf263/boltwiz/modules/database/repository"
 
-	"github.com/boltdbgui/utils"
+	"github.com/knqyf263/boltwiz/utils"
 
-	"github.com/boltdbgui/modules/database/model"
+	"github.com/knqyf263/boltwiz/modules/database/model"
 
 	"github.com/labstack/echo/v4"
 )
 
-func SayHello(c echo.Context) error {
+type Handlers struct {
+	repo *repository.Repository
+}
+
+func NewHandlers(repo *repository.Repository) *Handlers {
+	return &Handlers{repo: repo}
+}
+
+func (h *Handlers) SayHello(c echo.Context) error {
 	return c.String(200, "Hello from the other side")
 }
 
-func ListElement(c echo.Context) error {
+func (h *Handlers) ListElement(c echo.Context) error {
 	all, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -37,7 +45,7 @@ func ListElement(c echo.Context) error {
 	reqBody.PageSize = pageSize
 	reqBody.Page = pageNum
 	reqBody.SearchKey = searchKey
-	resp, err := usecase.ListElement(reqBody)
+	resp, err := h.repo.ListElement(reqBody)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed Listing element: %v", err))
@@ -45,7 +53,7 @@ func ListElement(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func AddBucket(c echo.Context) error {
+func (h *Handlers) AddBucket(c echo.Context) error {
 	all, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -55,7 +63,7 @@ func AddBucket(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	err = usecase.AddBuckets(reqBody)
+	err = h.repo.AddBuckets(reqBody)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed Adding bucket/s: %v", err))
@@ -63,7 +71,7 @@ func AddBucket(c echo.Context) error {
 	return c.JSON(http.StatusOK, "Buckets added successfully")
 }
 
-func AddPairs(c echo.Context) error {
+func (h *Handlers) AddPairs(c echo.Context) error {
 	all, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -73,7 +81,7 @@ func AddPairs(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	err = usecase.AddPairs(reqBody)
+	err = h.repo.AddPairs(reqBody)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed Adding pair/s: %v", err))
@@ -81,7 +89,7 @@ func AddPairs(c echo.Context) error {
 	return c.JSON(http.StatusOK, "Pairs added successfully")
 }
 
-func DeleteElement(c echo.Context) error {
+func (h *Handlers) DeleteElement(c echo.Context) error {
 	all, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -91,14 +99,14 @@ func DeleteElement(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	err = usecase.DeleteElement(reqBody)
+	err = h.repo.DeleteElement(reqBody)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed Deleting element : %v", err))
 	}
 	return c.JSON(http.StatusOK, "Deleted successfully")
 }
-func RenameElement(c echo.Context) error {
+func (h *Handlers) RenameElement(c echo.Context) error {
 	all, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -108,14 +116,14 @@ func RenameElement(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	err = usecase.RenameElement(reqBody)
+	err = h.repo.RenameElement(reqBody)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed renaming element : %v", err))
 	}
 	return c.JSON(http.StatusOK, "Renamed successfully")
 }
-func UpdatePairValue(c echo.Context) error {
+func (h *Handlers) UpdatePairValue(c echo.Context) error {
 	all, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
@@ -125,7 +133,7 @@ func UpdatePairValue(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	err = usecase.UpdatePairValue(reqBody)
+	err = h.repo.UpdatePairValue(reqBody)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed updating pair value : %v", err))

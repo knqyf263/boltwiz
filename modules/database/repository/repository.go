@@ -7,41 +7,39 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/boltdbgui/modules/database/model"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
+
+	"github.com/knqyf263/boltwiz/modules/database/model"
 )
 
-var (
+type Repository struct {
 	db *bolt.DB
-)
-
-type Config struct {
 }
 
-func Init(dbPath string) (err error) {
-	db, err = bolt.Open(dbPath, 0600, nil)
+func NewRepository(dbPath string) (*Repository, error) {
+	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
-		return xerrors.Errorf("failed to open db: %w", err)
+		return nil, xerrors.Errorf("failed to open db: %w", err)
 	}
-	return nil
+	return &Repository{db: db}, nil
 }
-func Close() error {
+func (r *Repository) Close() error {
 	// Skip closing the database if the connection is not established.
-	if db == nil {
+	if r.db == nil {
 		return nil
 	}
-	if err := db.Close(); err != nil {
+	if err := r.db.Close(); err != nil {
 		return xerrors.Errorf("failed to close DB: %w", err)
 	}
 	return nil
 }
 
-func ListElement(input model.ListElemReqBody) (elem model.ListedElem, err error) {
+func (r *Repository) ListElement(input model.ListElemReqBody) (elem model.ListedElem, err error) {
 	var resultFullSet []model.Result
 	cntOfRecords := 0
 	searchkey := strings.ToLower(input.SearchKey)
-	err = db.View(func(tx *bolt.Tx) error {
+	err = r.db.View(func(tx *bolt.Tx) error {
 		var rootBkt *bolt.Bucket
 		if len(input.LevelStack) > 0 {
 			rootBkt = tx.Bucket([]byte(input.LevelStack[0]))
@@ -130,8 +128,8 @@ func getInlineBucketandPairCount(b *bolt.Bucket) (bktCnt, pairCnt int) {
 	})
 	return bktCnt, pairCnt
 }
-func AddBuckets(input model.BucketsToAdd) (err error) {
-	err = db.Update(func(tx *bolt.Tx) error {
+func (r *Repository) AddBuckets(input model.BucketsToAdd) (err error) {
+	err = r.db.Update(func(tx *bolt.Tx) error {
 		var rootBkt *bolt.Bucket
 		if len(input.LevelStack) > 0 {
 			rootBkt = tx.Bucket([]byte(input.LevelStack[0]))
@@ -163,8 +161,8 @@ func AddBuckets(input model.BucketsToAdd) (err error) {
 	return err
 }
 
-func AddPairs(input model.PairsToAdd) (err error) {
-	err = db.Update(func(tx *bolt.Tx) error {
+func (r *Repository) AddPairs(input model.PairsToAdd) (err error) {
+	err = r.db.Update(func(tx *bolt.Tx) error {
 		var rootBkt *bolt.Bucket
 		if len(input.LevelStack) == 0 {
 			return errors.New("Cannot create key/value pairs without parent bucket, levelstack missing")
@@ -194,8 +192,8 @@ func AddPairs(input model.PairsToAdd) (err error) {
 	return err
 }
 
-func DeleteElement(input model.ItemToDelete) (err error) {
-	err = db.Update(func(tx *bolt.Tx) error {
+func (r *Repository) DeleteElement(input model.ItemToDelete) (err error) {
+	err = r.db.Update(func(tx *bolt.Tx) error {
 		var rootBkt *bolt.Bucket
 		if len(input.LevelStack) > 0 {
 			rootBkt = tx.Bucket([]byte(input.LevelStack[0]))
@@ -230,8 +228,8 @@ func DeleteElement(input model.ItemToDelete) (err error) {
 	return err
 }
 
-func RenameElement(input model.ItemToRename) (err error) {
-	err = db.Update(func(tx *bolt.Tx) error {
+func (r *Repository) RenameElement(input model.ItemToRename) (err error) {
+	err = r.db.Update(func(tx *bolt.Tx) error {
 		var rootBkt *bolt.Bucket
 		if len(input.LevelStack) > 0 {
 			rootBkt = tx.Bucket([]byte(input.LevelStack[0]))
@@ -267,8 +265,8 @@ func RenameElement(input model.ItemToRename) (err error) {
 	return err
 }
 
-func UpdatePairValue(input model.ItemToUpdate) (err error) {
-	err = db.Update(func(tx *bolt.Tx) error {
+func (r *Repository) UpdatePairValue(input model.ItemToUpdate) (err error) {
+	err = r.db.Update(func(tx *bolt.Tx) error {
 		var rootBkt *bolt.Bucket
 		if len(input.LevelStack) > 0 {
 			rootBkt = tx.Bucket([]byte(input.LevelStack[0]))

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/boltdbgui/cmd"
+	"github.com/knqyf263/boltwiz/cmd"
 )
 
 func main() {

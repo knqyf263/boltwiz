@@ -1,15 +1,28 @@
 package routes
 
 import (
-	"github.com/boltdbgui/ui"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"io/fs"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/knqyf263/boltwiz/ui"
 )
 
 func RegisterStaticRoutes(e *echo.Echo) {
-	staticPages := []string{"css", "styles", "img", "js", "app", "maps", "ico", "fonts", "video", "icons"}
+	staticPages := []string{
+		"css",
+		"styles",
+		"img",
+		"js",
+		"app",
+		"maps",
+		"ico",
+		"fonts",
+		"video",
+		"icons",
+	}
 
 	sub, err := fs.Sub(ui.WebContent, "dist")
 	if err != nil {
