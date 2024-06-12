@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/pkg/errors"
 
+	"github.com/jhump/protoreflect/desc/protoparse"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
 
@@ -14,15 +17,51 @@ import (
 )
 
 type Repository struct {
-	db *bolt.DB
+	db        *bolt.DB
+	unmarshal func([]byte) string
 }
 
-func NewRepository(dbPath string) (*Repository, error) {
+func NewRepository(dbPath, protoType string, protoFiles []string) (*Repository, error) {
 	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to open db: %w", err)
 	}
-	return &Repository{db: db}, nil
+
+	unmarshal := func(b []byte) string { return string(b) }
+
+	if protoType != "" && len(protoFiles) > 0 {
+		fileDescriptor, err := protoparse.Parser{}.ParseFiles(protoFiles...)
+		if err != nil {
+			return nil, xerrors.Errorf("failed to parse proto files: %w", err)
+		}
+
+		var md *desc.MessageDescriptor
+		for _, fd := range fileDescriptor {
+			if md = fd.FindMessage(protoType); md != nil {
+				break
+			}
+		}
+		if md == nil {
+			return nil, xerrors.Errorf("failed to find the specified type (%s): %w", protoType, err)
+		}
+
+		unmarshal = func(b []byte) string {
+			m := dynamic.NewMessage(md)
+			if err := m.Unmarshal(b); err != nil {
+				return fmt.Sprintf("failed to unmarshal message: %v", err)
+			}
+			b, err := json.Marshal(m)
+			if err != nil {
+				return fmt.Sprintf("failed to marshal message: %v", err)
+			}
+			return string(b)
+		}
+	}
+
+	return &Repository{
+		db:        db,
+		unmarshal: unmarshal,
+	}, nil
 }
 func (r *Repository) Close() error {
 	// Skip closing the database if the connection is not established.
@@ -77,7 +116,7 @@ func (r *Repository) ListElement(input model.ListElemReqBody) (elem model.Listed
 						model.Result{
 							Name:     string(k),
 							IsBucket: false,
-							Value:    string(v),
+							Value:    r.unmarshal(v),
 						})
 				}
 				return nil

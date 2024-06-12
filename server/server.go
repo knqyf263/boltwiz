@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,15 +20,18 @@ import (
 )
 
 type Options struct {
-	DBPath string
-	Port   int
+	DBPath     string
+	Port       int
+	ProtoFiles []string
+	ProtoType  string
 }
 
 func StartServer(opts Options) error {
-	repo, err := repository.NewRepository(opts.DBPath)
+	repo, err := repository.NewRepository(opts.DBPath, opts.ProtoType, opts.ProtoFiles)
 	if err != nil {
 		return err
 	}
+	defer repo.Close()
 	h := handlers.NewHandlers(repo)
 
 	// Echo instance
@@ -54,6 +58,8 @@ func StartServer(opts Options) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
+
+	slog.Info("Gracefully shutting down...")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err = e.Shutdown(ctx); err != nil {

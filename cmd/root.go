@@ -38,18 +38,21 @@ var rootCmd = &cobra.Command{
 			}()
 		}
 
-		server.StartServer(server.Options{
-			DBPath: dbPath,
-			Port:   input.port,
+		return server.StartServer(server.Options{
+			DBPath:     dbPath,
+			Port:       input.port,
+			ProtoFiles: input.protoFiles,
+			ProtoType:  input.protoType,
 		})
-		return nil
 	},
 }
 
 var input = new(struct {
-	debug bool
-	local bool
-	port  int
+	debug      bool
+	local      bool
+	port       int
+	protoType  string
+	protoFiles []string
 })
 
 func init() {
@@ -59,6 +62,8 @@ func init() {
 	rootCmd.Flags().BoolVarP(&input.local, "local", "l", false, "open the browser automatically")
 	rootCmd.Flags().BoolVarP(&input.debug, "debug", "d", false, "debug mode")
 	rootCmd.Flags().IntVarP(&input.port, "port", "p", 8090, "port to serve the server")
+	rootCmd.Flags().StringVar(&input.protoType, "proto-type", "", "The full type name of the message within the input (e.g. acme.weather.v1.Units)")
+	rootCmd.Flags().StringSliceVar(&input.protoFiles, "proto-files", nil, "Proto files")
 }
 
 func Execute() error {
